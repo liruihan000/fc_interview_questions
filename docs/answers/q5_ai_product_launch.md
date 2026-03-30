@@ -42,10 +42,9 @@ Phase 5 (Week 13+)  全量推广 & 持续优化
 
 ## 组织层面
 
-- **Executive Sponsor**：需VP级别以上支持。Microsoft数据显示，无高管支持的AI项目采纳率低于20%
 - **选对试点团队**：找愿意尝新、能容错、反馈质量高的团队
 - **快速展示价值**：2周内出Demo，让stakeholder看到可能性
-- **设立AI Champion**：各部门设推广人，这是Microsoft 365 Copilot企业部署的关键经验
+- **设立AI Champion**：各部门设推广人
 - **建立信任**：透明展示AI局限性，不过度承诺
 
 ## 业界案例速览
