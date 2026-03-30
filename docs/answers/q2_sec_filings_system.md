@@ -157,7 +157,7 @@ Airflow DAG（每日定时 + RSS实时触发）
 **为什么Step 2用ReAct Agent而非写死？**
 高管信息可能分散在Filing的不同section，且格式不统一。Agent需要自主判断"DEF 14A没找到邮箱→去10-K cover page找"——这是需要动态决策的部分。但cross_verify和verify_quality是确定性操作，写死即可。
 
-**模型选择**（参考 [LLM_Comparison_2026](../LLM_Comparison_2026.md)）：**MiniMax M2.5**（$0.30/$1.20，SWE-bench Verified 80.2% 全场最高，MMLU-Pro 85.0）+ structured output。联系方式抽取不需要顶级推理能力，M2.5 配合 JSON schema 约束足够且成本极低。低置信度 case 升级 **MiMo-V2-Pro**（$1.00/$3.00，1M 上下文，适合阅读完整长 filing）。
+**模型选择**（参考 [LLM_Comparison_2026](../LLM_Comparison_2026.md)）：**MiniMax M2.5**（$0.30/$1.20，MMLU-Pro 85.0）+ structured output。联系方式抽取不需要顶级推理能力，M2.5 配合 JSON schema 约束足够且成本极低。低置信度 case 升级 **MiMo-V2-Pro**（$1.00/$3.00，1M 上下文，适合阅读完整长 filing）。
 
 ---
 
