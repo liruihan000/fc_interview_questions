@@ -22,4 +22,4 @@ docs/
 
 1. `FC Interview Question List.docx` 是原题目
 2. `answers/q1` ~ `q8` 包含每道题的答案
-3. 参考文件： `Agent_Architecture_Decision_Guide.md` 和 `LLM_Comparison_2026.md`
+3. `Agent_Architecture_Decision_Guide.md` 和 `LLM_Comparison_2026.md`只是参考文件非答案
