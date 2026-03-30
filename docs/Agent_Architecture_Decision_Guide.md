@@ -283,17 +283,3 @@ ReAct Agent（推理-行动循环）
 
 多Agent应该是"单Agent明确不够用"之后的选择，不是默认选择。
 
----
-
-## 参考来源
-
-- [Anthropic: Building Effective Agents](https://www.anthropic.com/research/building-effective-agents)
-- [Anthropic: How We Built Our Multi-Agent Research System](https://www.anthropic.com/engineering/multi-agent-research-system)
-- [Google Research: Towards a Science of Scaling Agent Systems](https://research.google/blog/towards-a-science-of-scaling-agent-systems-when-and-why-agent-systems-work/)
-- [LangChain: Benchmarking Multi-Agent Architectures](https://blog.langchain.com/benchmarking-multi-agent-architectures/)
-- [From 12 Agents to 1: AI Agent Architecture Decision Guide](https://www.decodingai.com/p/from-12-agents-to-1-ai-agent-architecture-decision-guide)
-- [Agentic Design Patterns: The 2026 Guide](https://www.sitepoint.com/the-definitive-guide-to-agentic-design-patterns-in-2026/)
-- [Spring AI Agent Skills](https://spring.io/blog/2026/01/13/spring-ai-generic-agent-skills/)
-- [Agent Design Patterns — Lance Martin (LangChain)](https://rlancemartin.github.io/2026/01/09/agent_design/)
-- [VentureBeat: More Agents Isn't a Reliable Path](https://venturebeat.com/orchestration/research-shows-more-agents-isnt-a-reliable-path-to-better-enterprise-ai)
-- [Mount Sinai: Multi-Agent AI in Healthcare](https://www.mountsinai.org/about/newsroom/2026)
