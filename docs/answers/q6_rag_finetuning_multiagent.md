@@ -6,18 +6,9 @@
 
 ## 一、RAG vs Fine-tuning
 
-### 结合FC项目的选择
+### 个人判断标准
 
-| 环节 | 方案 | 理由 |
-|------|------|------|
-| SEC Filing 筛选（是否中国背景） | **Fine-tuning（小模型）** | 分类任务，pattern固定，FT后的MiMo-V2-Flash比RAG更快更便宜 |
-| SEC Filing 抽取（联系方式） | **RAG + Prompt** | 每份Filing内容不同，需实时检索具体段落来抽取 |
-| 企业知识库问答 | **RAG（单Agent）** | 上下文够用，单Agent最简 |
-| 报表生成 | **Prompt Engineering** | ReAct Agent + Skills已足够，不需要RAG或FT |
-
-### 判断标准
-
-知识不够用RAG，行为不对用Fine-tuning。但先试Prompt Engineering + Few-shot——很多时候这就够了。
+知识不够用RAG，只有当rag和harness engineer以及上下文工程都达不到要求时才会考虑Fine-tuning。
 
 ```
 Prompt Engineering + Few-shot 能解决吗？
