@@ -163,4 +163,4 @@ Action: code_execution("""
     └── architecture/           # overview, agent, api, frontend, decisions
 ```
 
-> 更多设计决策详见 repo 的 [`docs`](docs)。
+> 更多设计决策详见 repo 的 [docs](https://github.com/liruihan000/livinsai_chart_report_demo_for_FC/tree/main/docs)。
