@@ -67,20 +67,6 @@ def validate_sql(sql: str) -> None:
     # 禁止写操作、白名单表、只读连接 + 超时 + 行数限制
 ```
 
-### 2. Schema 通过 Skill 按需加载，不塞 System Prompt
-
-Demo 的数据库只有 4 张表，完整 Schema 写入 `data_query/SKILL.md`，Agent 需要时通过 `load_skill("data_query")` 一次加载。System Prompt 不包含任何 Skill 内容，Skill 索引通过 Tool 的 docstring 自动暴露给 LLM：
-
-```python
-@tool
-async def load_skill(name: str) -> str:
-    """Load a skill guide on demand. Available skills:
-    - data_query: DB schema (4 tables, columns, relationships) + SQL patterns
-    - chart_generation: chart type selection + style specs
-    - report_building: report structure + PDF layout specs
-    """
-    return strip_frontmatter((SKILLS_DIR / name / "SKILL.md").read_text())
-```
 
 > **规模扩展**：如果表增长到几十~几百张，Schema 一次加载会稀释注意力。此时改为渐进式树状探索（`explore_schema` Tool 逐层 drill-down），让 Agent 自己推理哪些表相关——比 Embedding 检索更准，因为 Embedding 会漏掉"语义距离远但业务相关"的表。
 
