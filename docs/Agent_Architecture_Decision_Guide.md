@@ -279,7 +279,7 @@ ReAct Agent（推理-行动循环）
 
 ## 总结：一句话决策
 
-**如果你犹豫用单Agent还是多Agent → 用单Agent。**
+**如果犹豫用单Agent还是多Agent → 用单Agent。**
 
 多Agent应该是"单Agent明确不够用"之后的选择，不是默认选择。
 
