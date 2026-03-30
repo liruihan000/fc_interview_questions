@@ -23,9 +23,9 @@
 ### 核心设计
 
 - **Prompt工程**：设计了4步Chain-of-Thought——关键词扫描 → 上下文分类 → 数值计算 → 交叉验证，配合6个few-shot examples覆盖边界case。最关键的一条规则是"Don't guess"：金额必须在文本中明确出现才提取，杜绝幻觉。
-- **并行处理**：ThreadPoolExecutor 50 workers + 共享HTTP连接池，批量处理数千条listing。
-- **幂等机制**：对 description + model + parser_version 做SHA256生成 `info_hash`，内容未变化的listing直接跳过，避免重复调用API。实际运行中跳过率约60-70%，大幅节省成本。
-- **调度**：Airflow DAG，由上游fetcher DAG触发（非定时），保证数据新鲜度。
+- **并行处理**：多线程批量处理数千条listing。
+- **幂等机制**：对 description + model 做 hash，内容未变化的 listing 直接跳过，避免重复 API 调用，大幅节省成本。
+- **调度**：Airflow DAG，由上游 fetcher DAG 触发（非定时），保证数据新鲜度。
 
 ### 数据来源
 
@@ -61,11 +61,10 @@ PostgreSQL中已抓取的listing数据（description + price），来源为 Livi
 于是完全重写，采用 **LangGraph ReAct Agent**：
 
 - **模型**：`claude-haiku-4-5`（高性价比），可按需切换Sonnet
-- **14个工具**：原子操作（search、details、availability、tour scheduling、location、FAQ、lead capture）+ 组合操作（check_and_schedule、unit_report、neighborhood_overview等）
-- **6个Skill（Markdown文件）**：自动加载为system prompt，指导agent执行复杂流程（pet_friendly搜索、NYC地名解析、tour预约、lead渐进捕获等）。这样agent知道"怎么做"，但保留了"做不做"的自主决策权。
-- **双LLM架构**：Agent LLM负责推理决策 + Formatter LLM将raw回复结构化为UI组件（listing cards、quick replies、tour form）
-- **Lead持久化**：SQLite存储，按phone/email去重合并，支持跨session追踪同一租客
-- **Protocol-based客户端抽象**：MockClient / HttpClient可切换，开发测试完全不依赖真实后端
+- **14个工具**：原子操作 + 组合操作，覆盖搜索、详情、预约、FAQ、lead capture 等
+- **6个Skill（Markdown文件）**：自动加载为 system prompt，指导 agent 执行复杂流程。agent 知道"怎么做"，但保留了"做不做"的自主决策权
+- **双LLM架构**：Agent LLM 负责推理决策 + Formatter LLM 将回复结构化为 UI 组件
+- **Protocol-based客户端抽象**：MockClient / HttpClient 可切换，开发测试不依赖真实后端
 
 ### 指标变化
 
