@@ -8,7 +8,7 @@
 
 ### 个人判断标准
 
-知识不够用RAG，只有当rag和harness engineer以及上下文工程都达不到要求时才会考虑Fine-tuning。
+知识不够用RAG，只有当rag和harness engineer以及上下文工程都达不到要求时才会考虑Fine-tuning,不过现在不是特别重的数据库也可以使用grep等工具采用渐进式披露的方式获取额外知识和context。
 
 ```
 Prompt Engineering + Few-shot 能解决吗？
