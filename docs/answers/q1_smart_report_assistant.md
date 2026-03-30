@@ -94,7 +94,7 @@ Agent 执行报表生成通常 10-30 秒，纯等待体验差。`POST /chat/stre
 
 ### 4. 对话历史：浏览器管状态，服务端无状态
 
-对话历史存浏览器 localStorage，每轮请求携带完整 messages 数组，服务端不持久化。后续需要跨设备同步时加 LangGraph Checkpointer（Redis / PostgreSQL）。
+demo的对话历史存浏览器 localStorage，每轮请求携带完整 messages 数组，服务端不持久化。后续需要跨设备同步时加 LangGraph Checkpointer（Redis / PostgreSQL）。
 
 ## ReAct 推理过程示例
 
