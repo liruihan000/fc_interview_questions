@@ -116,42 +116,19 @@ LLM-as-Judge（灵活、可扩展、80%与人类一致）
 
 Agent系统中，单次准确率不够——生产环境需要**每次都对**，不是"多试几次总有一次对"。
 
-τ-bench 引入的关键区分：
+τ-bench 引入了 pass@k 和 pass^k 的区分。pass@k 是 k 次尝试中至少成功1次的概率，衡量能力上限；pass^k 是 k 次尝试全部成功的概率，衡量生产可靠性。
 
-- **pass@k**：k次尝试中至少成功1次的概率。`1-(1-p)^k`，衡量能力上限。
-- **pass^k**：k次尝试全部成功的概率。`p^k`，衡量生产可靠性。
+举个例子：单次准确率90%的Agent，跑8次至少对1次的概率是99.99%（pass@8），但8次全部正确的概率只有43%（pass^8）。准确率降到80%，pass^8 就只有17%。GPT-4o 在零售客服场景中 pass@1 不到50%，pass^8 不到25%。
 
-| 单次准确率 p | pass@8（至少对1次） | pass^8（全部对） |
-|-------------|-------------------|-----------------|
-| 90% | 99.99% | 43% |
-| 80% | 99.97% | 17% |
-| 70% | 99.94% | 6% |
-
-GPT-4o 在零售客服场景中 pass@1 不到50%，pass^8 不到25%。
-
-90%准确率听起来不错，但连续跑8次全部正确的概率只有43%——每天自动处理数千条数据的生产系统中不可接受。对关键Agent定期跑 pass^k 测试，下降是模型退化或prompt漂移的早期信号。
+90%准确率听起来不错，但在每天处理数千条数据的生产系统中，43%的全对率不可接受。对关键Agent定期跑 pass^k 测试，下降是模型退化或prompt漂移的早期信号。
 
 ---
 
 ## 四、监控架构与工具选型
 
-```
-Production Traces → Observability平台 → Dashboard → Alerting
-                                                       ↓
-                                               Offline Eval（定期批量）
-                                                       ↓
-                                               Quality Report（周/月报）
-```
+线上 Production Traces 接入 Observability 平台，实时 Dashboard + 异常告警；离线定期批量 Eval 生成周/月质量报告。
 
-完整质量保障包括CI/CD阶段的评估门禁：
-
-```
-代码/Prompt提交 → CI Automated Evals（每次commit）
-               → Production Monitoring（实时）
-               → A/B Testing（发版时验证）
-               → User Feedback（持续收集）
-               → Manual Review（每周抽样校准）
-```
+完整质量保障不止线上监控，还包括 CI/CD 阶段的评估门禁：每次 Prompt/Agent 代码提交自动跑 Eval，发版时 A/B Testing 验证，持续收集用户反馈，每周人工抽样校准。
 
 ### 工具选型
 
