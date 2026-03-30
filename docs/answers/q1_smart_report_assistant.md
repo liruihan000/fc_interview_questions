@@ -81,7 +81,7 @@ Agent 在 Anthropic 托管沙盒中执行 matplotlib 绘图 + reportlab 组装 P
 
 ### 3. SSE 流式推送工具调用步骤
 
-Agent 执行报表生成通常 10-30 秒，纯等待体验差。`POST /chat/stream` 通过 LangGraph `astream_events(v2)` 实时推送事件：
+Agent 执行报表生成通常较九，纯等待体验差。`POST /chat/stream` 通过 LangGraph `astream_events(v2)` 实时推送事件：
 
 | SSE event | 说明 |
 |-----------|------|
