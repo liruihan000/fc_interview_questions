@@ -113,10 +113,10 @@ Airflow DAG（每日定时 + RSS实时触发）
 
 **关键点**：预估70-80%的公司可以在第1层直接判断，15-20%在第2层解决，只有5-10%需要LLM。这意味着5000条/天中，只有~250-500条需要LLM调用。
 
-### 模型选择
+### 模型选择（参考 [LLM_Comparison_2026](../LLM_Comparison_2026.md)）
 
 - 第1-2层：**不用LLM**，纯代码规则
-- 第3层：**Fine-tuned小模型** 或 Haiku/GPT-4o-mini（分类任务，pattern固定）
+- 第3层：**MiMo-V2-Flash**（小米，$0.10/$0.30，开源 MoE 309B/15B活跃）— 分类任务 pattern 固定，不需要强推理，极低成本即可覆盖
 - 不需要ReAct Agent——流程完全固定，一次structured output调用即可
 
 ---
@@ -157,7 +157,7 @@ Airflow DAG（每日定时 + RSS实时触发）
 **为什么Step 2用ReAct Agent而非写死？**
 高管信息可能分散在Filing的不同section，且格式不统一。Agent需要自主判断"DEF 14A没找到邮箱→去10-K cover page找"——这是需要动态决策的部分。但cross_verify和verify_quality是确定性操作，写死即可。
 
-**模型选择**：Sonnet + structured output（联系方式抽取不需要Opus级别推理能力，Sonnet配合JSON schema约束足够，成本降75%）。低置信度case才升级Opus。
+**模型选择**（参考 [LLM_Comparison_2026](../LLM_Comparison_2026.md)）：**MiniMax M2.5**（$0.30/$1.20，SWE-bench Verified 80.2% 全场最高，MMLU-Pro 85.0）+ structured output。联系方式抽取不需要顶级推理能力，M2.5 配合 JSON schema 约束足够且成本极低。低置信度 case 升级 **MiMo-V2-Pro**（$1.00/$3.00，1M 上下文，适合阅读完整长 filing）。
 
 ---
 
@@ -244,20 +244,20 @@ Airflow DAG（每日定时 + RSS实时触发）
 | 优化策略 | 效果 | 说明 |
 |---------|------|------|
 | **结构化优先** | **减少70-80%的LLM调用** | 5000条中~4000条可通过API字段+规则直接判断，只有~500-1000条需要LLM |
-| **模型级联** | 再省60-80% | 简单case用Haiku/FT小模型，复杂case才用Sonnet，极少数用Opus |
+| **模型级联** | 再省60-80% | 分类用 MiMo-V2-Flash（$0.10/$0.30），抽取用 MiniMax M2.5（$0.30/$1.20），复杂 case 才升级 MiMo-V2-Pro（$1.00/$3.00） |
 | **Prompt压缩** | 40-60% | 只传入Filing相关section，不传整个文档 |
-| **Batch API** | 50% | 非实时任务，使用OpenAI Batch API半价 |
-| **Prompt Caching** | 20-30% | Anthropic缓存系统提示90%折扣 |
+| **Batch API** | 50% | 非实时任务，使用 MiniMax/小米 Batch API |
+| **Prompt Caching** | 20-30% | 系统提示缓存，减少重复输入成本 |
 
 ### 成本估算
 
 | 方案 | 每日成本 |
 |------|---------|
-| 全部5000条用Opus | ~$50-100/天 |
-| 两步Agent（原方案） | ~$5-10/天 |
-| **结构化优先 + 模型级联（优化后）** | **~$1-3/天** |
+| 全部5000条用顶级闭源模型（Opus/GPT-5） | ~$50-100/天 |
+| 两步Agent（未优化） | ~$5-10/天 |
+| **结构化优先 + MiMo/MiniMax 级联（优化后）** | **~$0.3-1/天** |
 
-关键差异：原方案假设所有5000条都需要LLM处理，优化后只有500-1000条需要LLM，且大部分用最便宜的模型。
+关键差异：优化后只有500-1000条需要LLM，分类用 MiMo-V2-Flash（$0.10/$0.30），抽取用 MiniMax M2.5（$0.30/$1.20），成本较顶级模型低 1-2 个数量级。
 
 ---
 

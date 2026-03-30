@@ -62,7 +62,7 @@
 
 | 环节 | 推荐方案 | 理由 |
 |------|----------|------|
-| SEC Filing Step 1 筛选（"是否中国背景"） | **Fine-tuning（小模型）** | 分类任务，pattern固定，用FT后的Haiku/Mini比RAG更快更便宜 |
+| SEC Filing Step 1 筛选（"是否中国背景"） | **Fine-tuning（小模型）** | 分类任务，pattern固定，用FT后的MiMo-V2-Flash比RAG更快更便宜 |
 | SEC Filing Step 2 抽取（联系方式） | **RAG + Prompt** | 每份Filing内容不同，需要实时"检索"Filing具体段落来抽取 |
 | 企业知识库问答 | **RAG（单Agent）** | 上下文够用，单Agent最简 |
 | 报表生成 | **Prompt Engineering** | ReAct Agent + Skills设计已经足够，不需要RAG或FT |
@@ -91,7 +91,7 @@ FC的SEC系统用的是"两个独立单Agent + Airflow调度"，**不是**多Age
 |------|------|
 | RAG还是Fine-tuning？ | **先试Prompt Engineering；知识问题用RAG；行为问题用FT；生产级用混合方案** |
 | 多Agent有必要吗？ | **80%场景不需要。默认单Agent + Skills** |
-| FC项目该怎么选？ | SEC筛选→FT小模型，SEC抽取→RAG+强模型，报表→单ReAct Agent，知识库→单Agent+RAG |
+| FC项目该怎么选？ | SEC筛选→FT MiMo-V2-Flash，SEC抽取→RAG+MiniMax M2.5，报表→单ReAct Agent，知识库→单Agent+RAG |
 
 ---
 

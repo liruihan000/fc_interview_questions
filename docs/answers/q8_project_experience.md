@@ -29,7 +29,7 @@
 
 ### 数据来源
 
-PostgreSQL中已抓取的listing数据（description + price），来源为纽约主流租房平台。提取后生成12+维度的结构化折扣数据（free rent months、OP金额、security deposit savings等），并计算排序分：`ranking_score = max_discount + OP_amount × 2.0`，OP加权2倍是因为对租客的隐性价值更高。
+PostgreSQL中已抓取的listing数据（description + price），来源为 Livins AI 开发的房源数据获取渠道。提取后生成12+维度的结构化折扣数据（free rent months、OP金额、security deposit savings等），并计算排序分：`ranking_score = max_discount + OP_amount × 2.0`，OP加权2倍是因为对租客的隐性价值更高。
 
 ### 迭代过程
 

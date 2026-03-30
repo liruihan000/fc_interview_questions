@@ -23,12 +23,12 @@
 根据请求复杂度，将流量分发到不同成本的模型：
 
 ```
-用户请求 → 复杂度评估 → 简单(70%) → Haiku/GPT-4o-mini   $0.10/M tokens
-                      → 中等(20%) → Sonnet/GPT-4o        $2.50/M tokens
-                      → 复杂(10%) → Opus                  $10/M tokens
+用户请求 → 复杂度评估 → 简单(70%) → MiMo-V2-Flash        $0.10/M tokens
+                      → 中等(20%) → MiniMax M2.5          $0.30/M tokens
+                      → 复杂(10%) → MiMo-V2-Pro           $1.00/M tokens
 ```
 
-实战案例：SEC Filing系统中，用Haiku筛选5000条 + Opus精抽50条，日成本从$50-100降至$5-10，节省90%。2024年研究表明，级联路由（Cascade Routing）比单独路由或单独级联效果好14%。
+实战案例：SEC Filing系统中，用MiMo-V2-Flash筛选5000条 + MiniMax M2.5精抽50条，日成本从$50-100降至$0.3-1，节省99%。2024年研究表明，级联路由（Cascade Routing）比单独路由或单独级联效果好14%。
 
 **策略二：语义缓存（节省40-70%）**
 
