@@ -41,7 +41,7 @@ PostgreSQL中已抓取的listing数据（description + price），来源为 Livi
 
 ## 模块二：租房服务Agent
 
-这是经历了**完整技术迭代**的部分，也是我认为最值得分享的决策过程。
+这是经历了**完整技术迭代**的部分。
 
 ### V1：自建Workflow Agent（2024年）
 
