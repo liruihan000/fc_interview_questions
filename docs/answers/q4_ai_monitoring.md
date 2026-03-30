@@ -73,19 +73,7 @@ Agent系统有多步推理、工具调用、自主决策，需要专门监控。
 
 ### 第1层：确定性自动检查（Code-Based Grader）
 
-最可靠、最便宜、零LLM成本。适合有明确对错标准的指标：
-
-```python
-# 字符串精确匹配
-assert agent_output["name"] == golden_label["name"]
-
-# 正则格式校验
-assert re.match(r'\+\d{1,3}-\d+-\d+', agent_output["phone"])
-
-# 数据库状态对比（τ-bench的做法）
-# Agent说"已完成操作" → 不信它说的，直接检查DB状态
-assert db.query("SELECT status FROM orders WHERE id=?", order_id) == "cancelled"
-```
+最可靠、最便宜、零LLM成本。适合有明确对错标准的指标。
 
 关键原则：**评估Outcome（最终状态），而非Trajectory（执行路径）**。Agent可能走不同路径但都达到正确结果，检查"产出了什么"而不是"怎么走到那里的"。
 
@@ -95,47 +83,10 @@ assert db.query("SELECT status FROM orders WHERE id=?", order_id) == "cancelled"
 
 提升准确率的关键：用小整数scale（1-4）而非0-10浮点，强制Chain-of-Thought输出推理过程再给分，提供具体等级描述。
 
-```python
-JUDGE_PROMPT = """
-Your task is to evaluate the quality of the AI assistant's answer.
-
-Score scale:
-1: Terrible — completely irrelevant or very partial
-2: Mostly not helpful — misses key aspects
-3: Mostly helpful — provides support, could be improved
-4: Excellent — relevant, direct, detailed, addresses all concerns
-
-You MUST provide values for both fields:
-Evaluation: (your reasoning process)
-Total rating: (1-4)
-
-Question: {question}
-Answer: {answer}
-
-Evaluation: """
-```
-
 已知偏差：位置偏差（A/B两种顺序各评一次取一致结果）、单一Judge盲区（多个LLM组成评审团）。
 
-工具实现用 DeepEval 框架，开箱即用的 GEval 指标，与 pytest 集成：
+工具实现用 DeepEval 框架，开箱即用的 GEval 指标，与 pytest 集成。
 
-```python
-from deepeval.metrics import GEval
-from deepeval.test_case import LLMTestCase, LLMTestCaseParams
-
-metric = GEval(
-    name="Correctness",
-    criteria="Determine if the actual output is correct based on the expected output.",
-    evaluation_params=[LLMTestCaseParams.ACTUAL_OUTPUT, LLMTestCaseParams.EXPECTED_OUTPUT],
-    threshold=0.5
-)
-test_case = LLMTestCase(
-    input="What is the CEO's contact info?",
-    actual_output="Zhang San, CEO, zhang@xyz.com, +86-21-1234-5678",
-    expected_output="Zhang San, CEO, zhang@xyz.com, +86-21-1234-5678"
-)
-assert_test(test_case, [metric])
-```
 
 ### 第3层：人工介入（校准而非逐条检查）
 
@@ -204,37 +155,9 @@ Production Traces → Observability平台 → Dashboard → Alerting
 
 ### 工具选型
 
-| 框架 | 定位 | 核心能力 |
-|------|------|---------|
-| **DeepEval** | 通用LLM Eval | pytest集成，50+内置指标，GEval自定义Judge |
-| **RAGAS** | RAG专用 | Faithfulness/Relevancy等核心指标 |
-| **Promptfoo** | Prompt测试+红队 | CI/CD集成最完整 |
+推荐 Langfuse（开源可自托管，生产监控和Trace）+ DeepEval（CI/CD评估门禁，与pytest集成）+ 每周人工抽样校准。RAG场景额外加RAGAS做Faithfulness/Relevancy检测。
 
-| 平台 | 开源 | 核心能力 |
-|------|------|---------|
-| **Langfuse** | Yes | Trace/Score/Session三级评分，内置LLM-as-Judge |
-| **LangSmith** | No | LangChain官方，Agent链路追踪最完整 |
-
-推荐组合：Langfuse（生产监控和Trace）+ DeepEval（CI/CD评估门禁）+ 每周人工抽样校准。
-
-CI/CD集成示例，Prompt或Agent代码变更时自动跑评估：
-
-```yaml
-name: AI Quality Gate
-on:
-  pull_request:
-    paths: ['prompts/**', 'agents/**', 'config/**']
-jobs:
-  eval:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install deepeval
-      - name: Run evals
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: deepeval test run tests/eval_*.py --exit-on-first-failure
-```
+Prompt或Agent代码变更时可嵌入PR流程做自动回归，不通过则阻止合并。
 
 ---
 
