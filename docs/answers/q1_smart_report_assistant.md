@@ -133,7 +133,7 @@ Action: code_execution("""
 | LLM | Anthropic / OpenAI（`init_chat_model("provider:model")` 可切换） |
 | 图表/PDF | LLM Code Execution 沙盒（Demo）→ antvis MCP + Playwright（Prod） |
 | 数据 | PostgreSQL + PostGIS，通过 Data Service API 的 `/query/execute` 端点 |
-| 可观测性 | LangSmith / Arize AI 追踪 Thought-Action-Observation |
+| 可观测性 | LangSmith / Arize AI 追踪 Thought-Action-Observation （还未实现）|
 
 ## API 设计
 
