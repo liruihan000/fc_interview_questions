@@ -18,7 +18,7 @@ Prompt Engineering + Few-shot 能解决吗？
 └── 不能 → 问题出在哪？
             │
             ├── 上下文混乱，prompt指示不明 → harness engineer以及上下文工程
-            ├── 背景或行业知识不够（不知道最新信息/内部数据）→ RAG
+            ├── 背景或行业知识不够（不知道最新信息/内部数据）→ RAG/Grep
             ├── 行为不对（格式不符、分类不准）→ Fine-tuning
             └── 两者都有 / 生产级要求 → 混合方案（FT底座 + RAG动态知识）
 ```
