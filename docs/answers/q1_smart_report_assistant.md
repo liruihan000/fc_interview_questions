@@ -70,7 +70,7 @@ def validate_sql(sql: str) -> None:
 
 > **规模扩展**：如果表增长到几十~几百张，Schema 一次加载会稀释注意力。此时改为渐进式树状探索（`explore_schema` Tool 逐层 drill-down），让 Agent 自己推理哪些表相关——比 Embedding 检索更准，因为 Embedding 会漏掉"语义距离远但业务相关"的表。
 
-### 3. 图表+PDF：Code Execution 沙盒
+### 2. 图表+PDF：Code Execution 沙盒
 
 Agent 在 Anthropic 托管沙盒中执行 matplotlib 绘图 + reportlab 组装 PDF，通过 Files API 取回文件。图表和 PDF 合并为一次 Code Execution 调用，Agent 自行决定图表类型和报告结构。
 
@@ -79,7 +79,7 @@ Agent 在 Anthropic 托管沙盒中执行 matplotlib 绘图 + reportlab 组装 P
 | 图表 | LLM 沙盒 + matplotlib（5-15s） | [antvis/mcp-server-chart](https://github.com/antvis/mcp-server-chart) MCP Server，26+ 图表类型，~1-2s |
 | PDF | LLM 沙盒 + reportlab（同上） | Jinja2 → HTML → Playwright，warm 模式 13ms |
 
-### 4. SSE 流式推送工具调用步骤
+### 3. SSE 流式推送工具调用步骤
 
 Agent 执行报表生成通常 10-30 秒，纯等待体验差。`POST /chat/stream` 通过 LangGraph `astream_events(v2)` 实时推送事件：
 
@@ -92,7 +92,7 @@ Agent 执行报表生成通常 10-30 秒，纯等待体验差。`POST /chat/stre
 
 前端实时显示推理过程和工具步骤，完成后折叠保留在历史消息中可展开查看。
 
-### 5. 对话历史：浏览器管状态，服务端无状态
+### 4. 对话历史：浏览器管状态，服务端无状态
 
 对话历史存浏览器 localStorage，每轮请求携带完整 messages 数组，服务端不持久化。后续需要跨设备同步时加 LangGraph Checkpointer（Redis / PostgreSQL）。
 
