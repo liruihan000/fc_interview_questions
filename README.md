@@ -18,10 +18,6 @@ docs/
     └── q8_project_experience.md       # 项目经验
 ```
 
-## 说明
-
-所有内容均由我主导、借助 AI 工具生成，并经过多轮 review 和修改，视为我本人的观点。
-
 ## 阅读建议
 
 1. `FC Interview Question List.docx` 包含所有题目
