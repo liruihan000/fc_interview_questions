@@ -2,157 +2,180 @@
 
 > **原题**：请设计一个基于大模型（如 OpenAI API）的"智能报表生成助手"。要求：用户输入自然语言需求（例如：生成本月客户增长分析），系统自动调用数据库查询数据，通过 LLM 生成结构化报表总结，返回可下载内容（Markdown / PDF）。
 
-## 系统架构设计（ReAct Agent + Skills）
+> **Demo 代码和完整架构文档**：[liruihan000/livinsai_chart_report_demo_for_FC](https://github.com/liruihan000/livinsai_chart_report_demo_for_FC)
+>
+> 以 Livins AI 房源数据库为数据源，做了一个可运行的 Demo。以下是设计思路和关键决策的总结，详细文档见 repo 的 `docs/` 目录。
 
-**核心思路**：一个 ReAct Agent + 4个Skills。Agent只负责推理（理解意图、决定查什么、分析数据、决定用什么图表和报告结构），安全/校验/图表渲染/PDF构建全部下沉到Skill层。Schema不塞Prompt，让Agent通过树状目录自己探索。Skills内置了各类图表的生成方式和PDF的设计规范，Agent自行决定如何组合。
-
-```
-ReAct Agent（推理-行动循环）
-├── Skill: explore_schema()                 树状目录逐层探索数据库结构
-├── Skill: query_database(sql)              通过API查询数据（API层负责安全）
-├── Skill: create_chart(type, data, style)  生成图表（bar/line/pie/heatmap/scatter/...）
-└── Skill: build_report(sections, format)   组装Markdown/PDF（封装布局、封面、目录、样式规范）
-```
-
-### 设计哲学：关注点分离
+## 设计哲学
 
 ```
-Agent层：只做推理（理解意图、决定查什么、分析数据、撰写报告）
+Agent层：只做推理（理解意图、写SQL、分析数据、设计报告结构）
 Skill/API层：封装所有确定性逻辑（安全校验、权限控制、格式化）
 Agent不需要知道也不应该知道安全细节——那是API的事。
 ```
 
-| 层 | 职责 | 需要LLM？ |
-|----|------|-----------|
-| Agent | 理解用户意图、推理查询策略、分析数据、生成报告 | YES |
-| Skill: explore_schema | 返回树状目录，Agent逐层探索 | NO |
-| Skill: query_database | API层做AST校验+只读连接+超时+行数限制 | NO |
-| Skill: generate_report | Agent生成内容，Skill做图表渲染 | 部分 |
-| Skill: export_file | 纯代码：Jinja2模板+WeasyPrint导出 | NO |
+参考：[Anthropic: Building Effective Agents](https://www.anthropic.com/research/building-effective-agents) — 从最简方案开始，只在必要时增加复杂度。
 
-### Schema探索策略：按数据库规模选择
+## 系统架构
 
-> **💡 关键区分**：渐进式树状探索只在大型数据库（表多、schema复杂）时才有必要。如果数据库规模较小（表<20张），完整schema可以一次性通过Skill输入给Agent，无需逐层探索。
-
-| 数据库规模 | Schema获取方式 | 理由 |
-|-----------|--------------|------|
-| 小型（<20张表） | **一次性注入**：Skill直接返回完整schema，Agent一次看全 | 上下文窗口装得下，无需多轮交互，更快更简单 |
-| 大型（数十~数百张表） | **渐进式树状探索**：Agent逐层drill-down | 完整schema塞不进上下文/会稀释注意力，需要Agent自主推理哪些表相关 |
-
-#### 大型数据库：为什么用树状目录而非Embedding？
-
-Embedding方式会漏掉"语义距离远但业务相关"的表。比如用户问"客户增长分析"，Embedding可能检索到`customers`表但漏掉`orders`表，因为"订单"和"增长"语义距离远——但业务上需要交叉分析。
-
-**树状目录方式**：让Agent自己探索、自己推理哪些表有关（仅大型DB需要）。
+一个 ReAct Agent + 2 个 Tool + Code Execution 沙盒。
 
 ```
-explore_schema()
-→ 返回: [business_db, analytics_db, logs_db]
-
-explore_schema("business_db")
-→ 返回: [customers, orders, payments, products, ...]
-
-explore_schema("business_db.customers")
-→ 返回: {columns: [id, name, level, created_at, churned_at, ...],
-         row_count: 50000, description: "客户主表"}
+┌───────────────────────────────────────────────────┐
+│  Browser (localStorage: messages + session_id)    │
+└──────────────────────┬────────────────────────────┘
+                       │ POST /chat/stream (SSE)
+┌──────────────────────▼────────────────────────────┐
+│  FastAPI Backend (Stateless)                      │
+│  ┌──────────────────────────────────────────────┐ │
+│  │  ReAct Agent (LangGraph)                     │ │
+│  │  Thought → Action → Observation → ...        │ │
+│  │      │          │          │                  │ │
+│  │      ▼          ▼          ▼                  │ │
+│  │  load_skill  query_db   Code Execution       │ │
+│  │  (按需加载   (Text-to   (Anthropic沙盒:      │ │
+│  │   Schema/    SQL,API    matplotlib图表+       │ │
+│  │   规范)      层校验)    reportlab PDF)        │ │
+│  └──────────────────────────────────────────────┘ │
+└──────────────────────┬────────────────────────────┘
+                       │
+┌──────────────────────▼────────────────────────────┐
+│  PostgreSQL + PostGIS (via Data Service API)      │
+│  buildings, listings, ml_listings, isochrones     │
+└───────────────────────────────────────────────────┘
 ```
 
-Agent看到完整目录后自己判断："增长分析可能需要orders做交叉验证"——这是Embedding做不到的推理。
+### 为什么用单 Agent 不用 Multi-Agent？
 
-### ReAct 推理过程示例：
-```
-用户: "生成本月VIP客户增长分析，重点关注流失率"
+- Pipeline 多 Agent 串行会丢失上下文（用户说"重点关注流失率"在传递中丢失）
+- 报表生成是顺序+工具密集型任务，Google Research 数据：工具密集型多 Agent 慢 2-6 倍
+- 所有步骤共享同一个上下文（Agent 需要知道之前查了什么才能决定下一步）
 
-=== 阶段1：探索数据结构 ===
+## 关键设计决策
 
-Thought: 先了解数据库有哪些相关的表
-Action: explore_schema("business_db")
-Observation: [customers, orders, payments, subscriptions, ...]
+### 1. Text-to-SQL：Agent 写 SQL，API 层校验
 
-Thought: customers和subscriptions可能都相关，看看结构
-Action: explore_schema("business_db.customers")
-Observation: {columns: [id, name, level, created_at, churned_at, ...]}
+业界标准范式（Databricks AI/BI、Snowflake Cortex Analyst、AWS QuickSight Q 都用）。
 
-Action: explore_schema("business_db.subscriptions")
-Observation: {columns: [id, customer_id, plan, started_at, cancelled_at, ...]}
-
-=== 阶段2：查询数据 ===
-
-Thought: 先查本月VIP客户总量和新增
-Action: query_database("SELECT COUNT(*) ... WHERE level='VIP' AND created_at >= '2026-03-01'")
-Observation: 新增128人，总量3,542人
-
-Thought: 用户强调"重点关注流失率"，查流失数据并与上月对比
-Action: query_database("SELECT ... churned_at ... GROUP BY week")
-Observation: 本月流失87人，上月流失52人，环比增长67%
-
-Thought: subscriptions数据可以补充分析——流失用户的订阅类型分布
-Action: query_database("SELECT plan, COUNT(*) ... JOIN subscriptions ...")
-Observation: 流失主要集中在月付用户（72%）
-
-=== 阶段3：生成图表（Agent自行决定图表类型和组合） ===
-
-Thought: 月度增长趋势用折线图，本月vs上月对比用柱状图，流失分布用饼图
-Action: create_chart("line", monthly_trend_data, {title: "VIP客户月度增长趋势", x: "月份", y: "人数"})
-Observation: chart_1.png 已生成
-
-Action: create_chart("bar", comparison_data, {title: "本月vs上月VIP数据对比", groups: ["新增","流失","净增长"]})
-Observation: chart_2.png 已生成
-
-Action: create_chart("pie", churn_by_plan, {title: "流失用户订阅类型分布"})
-Observation: chart_3.png 已生成
-
-=== 阶段4：组装报告（Agent自行决定报告结构和内容） ===
-
-Thought: 数据和图表齐了，按"总结→趋势→重点分析→建议"的结构组装PDF
-Action: build_report({
-  format: "pdf",
-  title: "2026年3月VIP客户增长分析报告",
-  sections: [
-    {type: "summary", content: "本月VIP新增128人，总量3,542人。流失87人，环比增长67%，需重点关注。"},
-    {type: "chart", ref: "chart_1.png", caption: "近6个月VIP客户增长趋势"},
-    {type: "chart", ref: "chart_2.png", caption: "本月与上月关键指标对比"},
-    {type: "analysis", content: "流失率环比增长67%，其中72%为月付用户。年付用户流失率仅8%，说明..."},
-    {type: "chart", ref: "chart_3.png", caption: "流失用户订阅类型分布"},
-    {type: "recommendation", content: "1. 针对月付VIP推出年付优惠转化方案\n2. 对流失预警用户触发挽留策略\n3. ..."}
-  ]
-})
-Observation: report_2026_03_vip.pdf 已生成，下载链接: /reports/xxx.pdf
-```
-
-### Skill/API层安全设计（Agent不感知）：
+- **灵活**：任意聚合/JOIN/子查询，不需要为每种分析需求预定义 endpoint
+- **安全可控**：校验逻辑下沉到 API 层，Agent 不感知
 
 ```python
-# query_database Skill 的API层实现
-# Agent只调用 query_database(sql)，以下逻辑对Agent透明
-
-def query_database_api(sql: str) -> dict:
-    # 1. AST校验（sqlglot解析，不是正则）
-    parsed = sqlglot.parse_one(sql)
-    if not isinstance(parsed, sqlglot.exp.Select):
-        return {"error": "只允许SELECT语句"}
-
-    # 2. 表白名单校验
-    tables = extract_tables(parsed)
-    if not all(t in ALLOWED_TABLES for t in tables):
-        return {"error": f"无权访问: {tables}"}
-
-    # 3. 只读数据库连接（物理隔离，不是应用层限制）
-    with readonly_db.connect() as conn:
-        # 4. 超时30秒 + 最大10000行
-        result = conn.execute(sql, timeout=30, max_rows=10000)
-        return {"data": result.to_dict(), "row_count": len(result)}
+# data_service 侧 — POST /query/execute
+def validate_sql(sql: str) -> None:
+    tree = sqlglot.parse_one(sql)
+    if not isinstance(tree, exp.Select):
+        raise ValueError("Only SELECT queries allowed")
+    # 禁止写操作、白名单表、只读连接 + 超时 + 行数限制
 ```
 
-### 关键设计要点：
+### 2. Schema 通过 Skill 按需加载，不塞 System Prompt
 
-1. **树状Schema探索**：Agent通过目录逐层发现表结构，比Embedding更准（能推理出间接相关的表）
-2. **安全下沉到API层**：AST校验、只读连接、超时限制全在Skill/API层，Agent不感知
-3. **缓存层**：相似查询使用语义缓存（Semantic Cache），减少重复LLM调用
-4. **流式输出**：支持SSE流式输出，用户可看到推理过程并中途修正
-5. **迭代次数限制**：设置max_iterations防止Agent陷入循环（建议上限10轮）
+Demo 的数据库只有 4 张表，完整 Schema 写入 `data_query/SKILL.md`，Agent 需要时通过 `load_skill("data_query")` 一次加载。System Prompt 不包含任何 Skill 内容，Skill 索引通过 Tool 的 docstring 自动暴露给 LLM：
 
-### 技术栈参考（2026最新）：
-- **Agent框架**：LangGraph ReAct Agent / OpenAI Assistants API
-- **模型选择**：Claude Opus / GPT-4o（需要强推理能力驱动ReAct循环）
-- **可观测性**：LangSmith / Arize AI 追踪每轮Thought-Action-Observation
+```python
+@tool
+async def load_skill(name: str) -> str:
+    """Load a skill guide on demand. Available skills:
+    - data_query: DB schema (4 tables, columns, relationships) + SQL patterns
+    - chart_generation: chart type selection + style specs
+    - report_building: report structure + PDF layout specs
+    """
+    return strip_frontmatter((SKILLS_DIR / name / "SKILL.md").read_text())
+```
+
+> **规模扩展**：如果表增长到几十~几百张，Schema 一次加载会稀释注意力。此时改为渐进式树状探索（`explore_schema` Tool 逐层 drill-down），让 Agent 自己推理哪些表相关——比 Embedding 检索更准，因为 Embedding 会漏掉"语义距离远但业务相关"的表。
+
+### 3. 图表+PDF：Code Execution 沙盒
+
+Agent 在 Anthropic 托管沙盒中执行 matplotlib 绘图 + reportlab 组装 PDF，通过 Files API 取回文件。图表和 PDF 合并为一次 Code Execution 调用，Agent 自行决定图表类型和报告结构。
+
+| 组件 | Demo（当前） | 生产升级方案（10x+ 提速） |
+|------|-------------|--------------------------|
+| 图表 | LLM 沙盒 + matplotlib（5-15s） | [antvis/mcp-server-chart](https://github.com/antvis/mcp-server-chart) MCP Server，26+ 图表类型，~1-2s |
+| PDF | LLM 沙盒 + reportlab（同上） | Jinja2 → HTML → Playwright，warm 模式 13ms |
+
+### 4. SSE 流式推送工具调用步骤
+
+Agent 执行报表生成通常 10-30 秒，纯等待体验差。`POST /chat/stream` 通过 LangGraph `astream_events(v2)` 实时推送事件：
+
+| SSE event | 说明 |
+|-----------|------|
+| `thinking` | Agent 工具调用前的推理文本 |
+| `tool_start` / `tool_end` | 工具调用开始/完成（含 SQL、代码片段） |
+| `token` | 最终回复文本 |
+| `done` | 完成，附带生成的文件列表 |
+
+前端实时显示推理过程和工具步骤，完成后折叠保留在历史消息中可展开查看。
+
+### 5. 对话历史：浏览器管状态，服务端无状态
+
+对话历史存浏览器 localStorage，每轮请求携带完整 messages 数组，服务端不持久化。后续需要跨设备同步时加 LangGraph Checkpointer（Redis / PostgreSQL）。
+
+## ReAct 推理过程示例
+
+```
+用户: "分析曼哈顿一居室过去3个月的租金趋势，对比布鲁克林"
+
+Thought: 需要查数据库，先加载 Schema
+Action: load_skill("data_query")
+→ (返回完整 Schema：4张表字段+关系+SQL规范)
+
+Thought: 按月聚合曼哈顿和布鲁克林一居室的均价
+Action: query_database("SELECT b.borough, DATE_TRUNC('month', l.listed_at) AS month,
+        AVG(l.price) FROM listings l JOIN buildings b ON l.building_id = b.id
+        WHERE b.borough IN ('Manhattan','Brooklyn') AND l.bedrooms = 1
+        AND l.listed_at >= CURRENT_DATE - INTERVAL '3 months'
+        GROUP BY b.borough, month ORDER BY month")
+→ [{borough: "Manhattan", month: "2026-01", avg_price: 3450}, ...]
+
+Thought: 加载图表和报告规范，然后在沙盒中一次性生成图表+PDF
+Action: load_skill("chart_generation"), load_skill("report_building")
+Action: code_execution("""
+  import matplotlib.pyplot as plt
+  from reportlab.platypus import SimpleDocTemplate, Image, Paragraph
+  # 趋势折线图 + 区域对比柱状图 + 组装 PDF
+  ...
+""")
+→ 文件生成完毕，通过 Files API 取回 → 前端展示下载按钮 + PDF 预览
+```
+
+## 技术栈
+
+| 层 | 选择 |
+|---|------|
+| 前端 | Next.js 15 (静态导出) + React 19 + Tailwind CSS v4 + @react-pdf-viewer/core |
+| 后端 | FastAPI + LangGraph ReAct Agent + LangChain |
+| LLM | Anthropic / OpenAI（`init_chat_model("provider:model")` 可切换） |
+| 图表/PDF | LLM Code Execution 沙盒（Demo）→ antvis MCP + Playwright（Prod） |
+| 数据 | PostgreSQL + PostGIS，通过 Data Service API 的 `/query/execute` 端点 |
+| 可观测性 | LangSmith / Arize AI 追踪 Thought-Action-Observation |
+
+## API 设计
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/chat` | POST | 同步对话（发送完整消息历史，返回回复+文件引用） |
+| `/chat/stream` | POST | SSE 流式对话（实时推送工具步骤+文本） |
+| `/reports/{file_id}` | GET | 从 Anthropic Files API 流式转发文件下载 |
+| `/health` | GET | 健康检查 |
+
+## 项目结构
+
+```
+├── src/livins_report_agent/    # 后端
+│   ├── agent/                  # ReAct Agent（LangGraph）
+│   ├── api/                    # FastAPI 端点
+│   ├── tools/                  # query_database, load_skill
+│   ├── skills/                 # SKILL.md（Schema、图表规范、报告规范）
+│   └── apartment_client/       # 数据服务客户端（Protocol-based，Mock/Http 可切换）
+├── frontend/                   # Next.js 前端
+│   └── src/
+│       ├── components/         # Chat + PDF 预览 split-panel
+│       ├── hooks/              # useChat（SSE流式）, usePdf, useLocalStorage
+│       └── lib/                # API 调用、类型定义
+└── docs/                       # 详细架构文档
+    └── architecture/           # overview, agent, api, frontend, decisions
+```
+
+> 更多设计决策详见 repo 的 [`docs/architecture/decisions.md`](https://github.com/liruihan000/livinsai_chart_report_demo_for_FC/blob/main/docs/architecture/decisions.md)。
