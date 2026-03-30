@@ -297,16 +297,3 @@ jobs:
 5. **评估Outcome而非Trajectory**——Agent可能走不同路径达到相同正确结果
 6. **监控eval饱和度**——当某个eval的通过率长期100%时，它已经不再提供信息，应转为regression suite，同时补充新的edge case
 
----
-
-## 参考来源
-
-- [Anthropic: Demystifying Evals for AI Agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
-- [Anthropic: Bloom - Automated Behavioral Evaluations](https://alignment.anthropic.com/2025/bloom-auto-evals/)
-- [Sierra AI: τ-Bench - Benchmarking AI Agents](https://sierra.ai/blog/benchmarking-ai-agents)
-- [Evidently AI: LLM-as-a-Judge Complete Guide](https://www.evidentlyai.com/llm-guide/llm-as-a-judge)
-- [AWS: Evaluating AI Agents - Real-World Lessons from Amazon](https://aws.amazon.com/blogs/machine-learning/evaluating-ai-agents-real-world-lessons-from-building-agentic-systems-at-amazon/)
-- [Hugging Face: LLM-as-a-Judge Cookbook](https://huggingface.co/learn/cookbook/en/llm_judge)
-- [GitHub: confident-ai/deepeval](https://github.com/confident-ai/deepeval)
-- [GitHub: UKGovernmentBEIS/inspect_ai](https://github.com/UKGovernmentBEIS/inspect_ai)
-- [GitHub: sierra-research/tau2-bench](https://github.com/sierra-research/tau2-bench)

@@ -28,7 +28,7 @@
                       → 复杂(10%) → MiMo-V2-Pro           $1.00/M tokens
 ```
 
-实战案例：SEC Filing系统中，用MiMo-V2-Flash筛选5000条 + MiniMax M2.5精抽50条，日成本从$50-100降至$0.3-1，节省99%。2024年研究表明，级联路由（Cascade Routing）比单独路由或单独级联效果好14%。
+以 MiMo/MiniMax 为例，DeepSeek V3.2、Gemini Flash 等也有类似低成本选项，可根据实际场景灵活替换。实战案例：SEC Filing系统中，用MiMo-V2-Flash筛选5000条 + MiniMax M2.5精抽50条，日成本从$50-100降至$0.3-1，节省99%。
 
 **策略二：语义缓存（节省40-70%）**
 

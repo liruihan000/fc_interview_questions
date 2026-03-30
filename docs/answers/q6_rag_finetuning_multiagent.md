@@ -93,15 +93,3 @@ FC的SEC系统用的是"两个独立单Agent + Airflow调度"，**不是**多Age
 | 多Agent有必要吗？ | **80%场景不需要。默认单Agent + Skills** |
 | FC项目该怎么选？ | SEC筛选→FT MiMo-V2-Flash，SEC抽取→RAG+MiniMax M2.5，报表→单ReAct Agent，知识库→单Agent+RAG |
 
----
-
-## 参考来源
-
-- [Anthropic: Building Effective Agents](https://www.anthropic.com/research/building-effective-agents)
-- [Anthropic: How We Built Our Multi-Agent Research System](https://www.anthropic.com/engineering/multi-agent-research-system)
-- [Google Research: Towards a Science of Scaling Agent Systems](https://research.google/blog/towards-a-science-of-scaling-agent-systems-when-and-why-agent-systems-work/)
-- [LangChain: Benchmarking Multi-Agent Architectures](https://blog.langchain.com/benchmarking-multi-agent-architectures/)
-- [From 12 Agents to 1: AI Agent Architecture Decision Guide](https://www.decodingai.com/p/from-12-agents-to-1-ai-agent-architecture-decision-guide)
-- [Fine-tuning vs RAG vs Agents - RedBlox](https://redblox.ai/blog/fine-tuning-vs-rag-vs-agents)
-- [RAG vs Fine-Tuning for LLMs (2026)](https://umesh-malik.com/blog/rag-vs-fine-tuning-llms-2026)
-- [From RAG to Multi-Agent Systems Survey](https://www.preprints.org/manuscript/202502.0406)

@@ -70,7 +70,7 @@ PostgreSQL中已抓取的listing数据（description + price），来源为 Livi
 
 | 维度 | V1 Workflow | V2 ReAct Agent |
 |------|------------|----------------|
-| 单轮LLM调用 | 3-4次串行 | 1-2次（agent自主决策） |
+| 响应速度 | 3-4次串行，体感慢 | 1-2次调用，响应显著加快 |
 | 错误恢复 | Triage误分类则整链失败 | Agent可observe→think→retry |
 | 新增能力 | 加节点+路由+prompt | 新增一个tool函数 |
 | 代码维护 | 8节点+DAG引擎+JSON配置 | 1个graph + tools + markdown skills |
