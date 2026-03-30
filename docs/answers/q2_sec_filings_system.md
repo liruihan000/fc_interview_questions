@@ -93,9 +93,9 @@ Airflow DAG（每日定时 + RSS实时触发）
 新Filing入库
 │
 ├── 第1层：结构化字段过滤（零成本，代码规则）
-│   ├── stateOfIncorporation ∈ {F4, K3} → 直接标记"中国背景" ✅
-│   ├── addresses.business.countryCode ∈ {F4, K3} → 直接标记 ✅
-│   ├── name 含 "China|Chinese|Sino|中国" → 直接标记 ✅
+│   ├── stateOfIncorporation ∈ {F4, K3} → 直接标记"中国背景" 
+│   ├── addresses.business.countryCode ∈ {F4, K3} → 直接标记 
+│   ├── name 含 "China|Chinese|Sino|中国" → 直接标记 
 │   └── ein == "000000000" + stateOfIncorporation ∈ {E9, D0, D8}
 │       → 外国公司注册在离岸地 → 进入第2层
 │
@@ -103,7 +103,7 @@ Airflow DAG（每日定时 + RSS实时触发）
 │   ├── 10-K全文搜索 "operations in China|PRC|VIE|Variable Interest"
 │   ├── Exhibit 21子公司列表中含中国地名/实体
 │   └── 审计师匹配已知中国审计所名单
-│   → 命中2+信号 → 标记"中国背景" ✅
+│   → 命中2+信号 → 标记"中国背景" 
 │   → 命中1个 → 进入第3层
 │
 └── 第3层：LLM判断（仅对边界案例，量极少）
