@@ -29,9 +29,9 @@
 
 最容易被忽略的是 Faithfulness——模型输出"看起来流畅"但内容是编造的，肉眼难以察觉。
 
-**计算方式**：LLM-as-Judge 自动打分（用1-4整数scale，强制CoT先输出推理再给分），Safety 用 Guard model 实时检测。已知偏差通过A/B两种顺序各评一次 + 多LLM评审团消除。
+**计算方式**：LLM-as-Judge 自动打分（用1-4整数scale，强制CoT先输出推理再给分），Safety 用 Guard model 实时检测。已知偏差通过A/B两种顺序各评一次 + 多LLM评审团消除。评分标准和阈值需要人工配置，基于 Golden Dataset 校准（见落地方案）。
 
-**监控方式**：Langfuse 内置 LLM-as-Judge 在线打分 + 人工定期抽样校准。
+**监控方式**：Langfuse 配置 LLM-as-Judge 在线打分 + 人工定期抽样校准 Judge 本身的准确性。
 
 ## 第三层：业务 — 对用户是否有帮助
 
@@ -68,6 +68,8 @@
 
 在 Livins AI 的折扣提取系统中，实际用的是确定性检查优先——info_hash 对比 + 字段格式校验覆盖大部分 case，只有内容存疑的才需人工抽查。
 
-工具推荐 Langfuse（开源可自托管，生产 Trace + 实时告警）+ DeepEval（CI/CD 评估门禁，与 pytest 集成）。Prompt/Agent 代码变更自动跑回归，不通过阻止合并。人工每周抽样校准，构建 Golden Dataset 反哺规则改进。
+工具推荐 Langfuse（开源可自托管，生产 Trace + 实时告警）+ DeepEval（CI/CD 评估门禁，与 pytest 集成）。Prompt/Agent 代码变更自动跑回归，不通过阻止合并。
+
+Golden Dataset（20-50个真实case人工标注）跨层共用：校准第二层 LLM-as-Judge 的评分准确性，同时作为第四层 pass^k 回归测试的固定输入。人工每周抽样校准，失败案例持续补充进 Golden Dataset。
 
 关键原则：**评估 Outcome 而非 Trajectory**——检查Agent产出了什么，而不是怎么走到那里的。
