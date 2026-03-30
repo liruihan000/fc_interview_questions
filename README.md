@@ -20,6 +20,6 @@ docs/
 
 ## 阅读建议
 
-1. `FC Interview Question List.docx` 包含所有题目
-2. 按 `answers/q1` ~ `q8` 顺序逐题阅读答案，每题独立成篇
-3. 需要补充背景知识时参考 `Agent_Architecture_Decision_Guide.md` 和 `LLM_Comparison_2026.md`
+1. `FC Interview Question List.docx` 是原题目
+2. `answers/q1` ~ `q8` 包含没道题的答案
+3. 参考文件： `Agent_Architecture_Decision_Guide.md` 和 `LLM_Comparison_2026.md`
