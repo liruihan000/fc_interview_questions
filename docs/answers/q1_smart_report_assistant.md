@@ -59,15 +59,6 @@ Agent不需要知道也不应该知道安全细节——那是API的事。
 - **灵活**：任意聚合/JOIN/子查询，不需要为每种分析需求预定义 endpoint
 - **安全可控**：校验逻辑下沉到 API 层，Agent 不感知
 
-```python
-# data_service 侧 — POST /query/execute
-def validate_sql(sql: str) -> None:
-    tree = sqlglot.parse_one(sql)
-    if not isinstance(tree, exp.Select):
-        raise ValueError("Only SELECT queries allowed")
-    # 禁止写操作、白名单表、只读连接 + 超时 + 行数限制
-```
-
 
 > **规模扩展**：如果表增长到几十~几百张，Schema 一次加载会稀释注意力。此时改为渐进式树状探索（`explore_schema` Tool 逐层 drill-down），让 Agent 自己推理哪些表相关——比 Embedding 检索更准，因为 Embedding 会漏掉"语义距离远但业务相关"的表。
 
