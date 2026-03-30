@@ -1,12 +1,10 @@
-# First Cover 面试准备
-
-本仓库为 AI/大模型方向技术面试的准备材料。
+# First Cover 笔试答案
 
 ## 目录结构
 
 ```
 docs/
-├── FC Interview Question List.docx   # 面试题目原始清单
+├── FC Interview Question List.docx   # 笔试题目原始清单
 ├── Agent_Architecture_Decision_Guide.md  # Agent 架构选型参考
 ├── LLM_Comparison_2026.md            # 2026 主流 LLM 对比
 └── answers/                          # 各题详细作答
