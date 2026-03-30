@@ -1,0 +1,107 @@
+# 问题6：RAG vs Fine-tuning & Multi-Agent
+
+> **原题**：RAG vs Fine-tuning，你如何选择？多Agent架构是否真的有必要？
+
+---
+
+## 一、RAG vs Fine-tuning 决策框架
+
+### 核心区别（一句话）
+
+> **RAG = 给模型换"参考书"（改变它当前能看到什么）**
+> **Fine-tuning = 给模型换"大脑"（改变它每次如何表现）**
+
+### 对比总览
+
+| 维度 | RAG | Fine-tuning | 混合方案 |
+|------|-----|-------------|----------|
+| **知识更新** | 实时更新，无需重新训练 | 需重新训练 | RAG负责动态知识 |
+| **准确率** | 中等（单独） | 中高（单独） | **最高（混合方案准确率显著优于单一方案）** |
+| **成本** | 检索基础设施成本（持续） | 训练成本（一次性） | 两者兼有 |
+| **适用场景** | 文档QA、知识库、政策查询 | 风格一致性、格式控制、分类 | 生产级应用 |
+| **延迟** | 较高（含检索环节） | 较低（无检索开销） | 取决于设计 |
+| **数据需求** | 无需标注数据，有文档即可 | 需要大量高质量标注数据 | 各自负责一部分 |
+| **可解释性** | 高（可追溯到具体文档段落） | 低（知识融入权重，不可追溯） | RAG部分可追溯 |
+
+### 决策树
+
+> **前置问题**：这个场景是否适合用大模型？（需先通过LLM适用性评估）
+> 确认适合后，再用以下决策树选择具体技术路线：
+
+```
+第一步：Prompt Engineering + Few-shot 能解决吗？
+│
+├── 能 → 到此为止，不要过度工程化
+│
+└── 不能 → 问题出在哪？
+            │
+            ├── 知识不够（模型不知道最新信息/内部数据）
+            │   → RAG
+            │
+            ├── 行为不对（格式不符、风格不一致、分类不准）
+            │   → Fine-tuning
+            │
+            ├── 两者都有
+            │   → 混合方案（Fine-tune底座 + RAG动态知识）
+            │
+            └── 生产级要求（高准确率+实时知识+稳定输出）
+                → 混合方案是最优解
+```
+
+### 五维度决策框架
+
+| 判断维度 | 选 RAG | 选 Fine-tuning |
+|----------|--------|----------------|
+| 知识是否频繁更新 | 是（法规、新闻、产品文档） | 否（稳定领域知识） |
+| 需要引用来源吗 | 是（可溯源是刚需） | 不需要 |
+| 输出风格/格式有严格要求 | 不是重点 | 是（如JSON、特定行文风格） |
+| 训练数据量 | 少/无标注数据 | 有大量高质量标注数据 |
+| 成本敏感度 | 运行时检索成本可接受 | 一次训练成本可接受 |
+
+### 结合 First Cover（FC）项目的具体选择
+
+| 环节 | 推荐方案 | 理由 |
+|------|----------|------|
+| SEC Filing Step 1 筛选（"是否中国背景"） | **Fine-tuning（小模型）** | 分类任务，pattern固定，用FT后的Haiku/Mini比RAG更快更便宜 |
+| SEC Filing Step 2 抽取（联系方式） | **RAG + Prompt** | 每份Filing内容不同，需要实时"检索"Filing具体段落来抽取 |
+| 企业知识库问答 | **RAG（单Agent）** | 上下文够用，单Agent最简 |
+| 报表生成 | **Prompt Engineering** | ReAct Agent + Skills设计已经足够，不需要RAG或FT |
+
+---
+
+## 二、单Agent vs 多Agent：是否真的有必要？
+
+> 完整的架构决策指南涵盖复杂度光谱、决策树、各架构详解及实战速查表。
+
+### 简要结论
+
+- **80%场景**：单Agent + Tools/Skills 是最优解
+- **多Agent必要条件**（Anthropic，四条全满足才考虑）：大量可并行子任务 + 超出单上下文窗口 + 工具>20 + 任务价值覆盖15x成本
+- **如果犹豫** → 用单Agent。多Agent是"单Agent明确不够用"之后的选择，不是默认选择
+
+### 结合FC项目
+
+FC的SEC系统用的是"两个独立单Agent + Airflow调度"，**不是**多Agent架构——调度交给Airflow（确定性），每个Agent独立运行，通过任务队列传递数据。这是正确做法。
+
+---
+
+## 三、总结决策表
+
+| 问题 | 答案 |
+|------|------|
+| RAG还是Fine-tuning？ | **先试Prompt Engineering；知识问题用RAG；行为问题用FT；生产级用混合方案** |
+| 多Agent有必要吗？ | **80%场景不需要。默认单Agent + Skills** |
+| FC项目该怎么选？ | SEC筛选→FT小模型，SEC抽取→RAG+强模型，报表→单ReAct Agent，知识库→单Agent+RAG |
+
+---
+
+## 参考来源
+
+- [Anthropic: Building Effective Agents](https://www.anthropic.com/research/building-effective-agents)
+- [Anthropic: How We Built Our Multi-Agent Research System](https://www.anthropic.com/engineering/multi-agent-research-system)
+- [Google Research: Towards a Science of Scaling Agent Systems](https://research.google/blog/towards-a-science-of-scaling-agent-systems-when-and-why-agent-systems-work/)
+- [LangChain: Benchmarking Multi-Agent Architectures](https://blog.langchain.com/benchmarking-multi-agent-architectures/)
+- [From 12 Agents to 1: AI Agent Architecture Decision Guide](https://www.decodingai.com/p/from-12-agents-to-1-ai-agent-architecture-decision-guide)
+- [Fine-tuning vs RAG vs Agents - RedBlox](https://redblox.ai/blog/fine-tuning-vs-rag-vs-agents)
+- [RAG vs Fine-Tuning for LLMs (2026)](https://umesh-malik.com/blog/rag-vs-fine-tuning-llms-2026)
+- [From RAG to Multi-Agent Systems Survey](https://www.preprints.org/manuscript/202502.0406)
