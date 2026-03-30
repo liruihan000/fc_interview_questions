@@ -21,8 +21,6 @@ API单价贵是原因之一，但还有系统性问题也可能增加成本：
 
 以MiMo/MiniMax为例，DeepSeek V3.2、Gemini Flash等也有类似低成本选项。
 
-**语义缓存（节省40-70%）。** 向量相似度匹配，语义相似查询直接返回缓存结果。适合FAQ、知识库问答等重复率高的场景。
-
 **Prompt工程优化（节省20-40%）。** 精简上下文、压缩Prompt、启用Prompt Caching和Batch API。各家Provider都支持。
 
 **推理层优化（节省30-50%，自部署场景）。** 量化、知识蒸馏、Speculative Decoding，适用于自部署开源模型。
