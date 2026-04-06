@@ -1,10 +1,8 @@
-# First Cover 笔试答案
-
 ## 目录结构
 
 ```
 docs/
-├── FC Interview Question List.docx   # 笔试题目原始清单
+├── FC Interview Question List.docx   # agent questions原始清单
 ├── Agent_Architecture_Decision_Guide.md  # Agent 架构选型参考
 ├── LLM_Comparison_2026.md            # 2026 主流 LLM 对比
 └── answers/                          # 各题详细作答
@@ -20,6 +18,5 @@ docs/
 
 ## 阅读建议
 
-1. `FC Interview Question List.docx` 是原题目
-2. `answers/q1` ~ `q8` 包含每道题的答案
-3. `Agent_Architecture_Decision_Guide.md` 和 `LLM_Comparison_2026.md`只是参考文件非答案
+1. `answers/q1` ~ `q8` 包含每个问题的答案
+2. `Agent_Architecture_Decision_Guide.md` 和 `LLM_Comparison_2026.md`只是参考文件
